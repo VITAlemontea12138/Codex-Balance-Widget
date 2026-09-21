@@ -1,6 +1,6 @@
 {
   "name": "codex-balance-widget",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A live Codex usage widget with an interactive desktop character for Windows.",
   "license": "MIT",
   "author": "VITAlemontea12138",
@@ -16,12 +16,47 @@
   "main": "src/main.mjs",
   "scripts": {
     "check": "node scripts/check-limits.mjs",
-    "start": "electron ."
+    "start": "electron .",
+    "icon": "node scripts/make-icon.mjs",
+    "dist": "npm run icon && electron-builder --win portable --x64"
+  },
+  "build": {
+    "appId": "io.github.VITAlemontea12138.codex-balance-widget",
+    "productName": "Codex Balance Widget",
+    "asar": true,
+    "files": [
+      "src/**/*",
+      "assets/character-leaning-v1.png",
+      "assets/character-happy-v1.png",
+      "assets/character-curious-v1.png",
+      "assets/character-sleepy-v1.png",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "scripts/get-codex-window.ps1",
+        "to": "scripts/get-codex-window.ps1"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Codex-Balance-Widget-${version}-win-${arch}.${ext}"
+    }
   },
   "engines": {
     "node": ">=22"
   },
   "devDependencies": {
-    "electron": "44.4.3"
+    "electron": "44.4.3",
+    "electron-builder": "^26.15.3",
+    "sharp": "^0.35.4"
   }
 }

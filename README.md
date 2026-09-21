@@ -39,9 +39,21 @@
 - Codex 桌面版
 - Node.js 22 或更高版本
 
-### 第一次使用
+### 推荐：下载便携版 EXE
 
-克隆仓库并安装依赖：
+普通用户请打开仓库右侧的 **Releases**，下载：
+
+```text
+Codex-Balance-Widget-1.0.0-win-x64.exe
+```
+
+无需安装 Node.js。确保 Codex 桌面版已经登录，双击 EXE 即可启动。可以把 EXE 放到桌面或任意文件夹。
+
+> Windows 首次运行社区开源软件时，可能显示来源提醒。请只从本仓库 Releases 页面下载，并核对下面提供的 SHA-256。
+
+### 从源码运行
+
+开发者可以克隆仓库并安装依赖：
 
 ```powershell
 git clone https://github.com/VITAlemontea12138/Codex-Balance-Widget.git
@@ -117,7 +129,7 @@ Codex 官方 app-server
 
 1. 设置与提醒：缩放、开机启动、低额度阈值和音效开关。
 2. 交互完善：折叠气泡、更多角色状态、拖拽吸附。
-3. 打包测试：生成 Windows 安装包，并验证 Codex 更新后仍能工作。
+3. 兼容测试：持续验证新版 Codex 桌面端与 Windows 更新。
 
 ## 与参考项目的关系
 

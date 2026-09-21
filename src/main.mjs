@@ -20,7 +20,7 @@ let followBusy = false;
 let followTimer = null;
 let widgetScale = 1;
 
-const rateClient = new RateLimitClient();
+const rateClient = new RateLimitClient({ command: resolveCodexExecutable() });
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) {
@@ -34,6 +34,7 @@ if (!hasSingleInstanceLock) {
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId("io.github.VITAlemontea12138.codex-balance-widget");
   widgetScale = loadWidgetSettings().scale;
   createWindow();
   wireRateClient();
@@ -121,7 +122,9 @@ function sendToRenderer(channel, value) {
 }
 
 function startFollowingCodex() {
-  const scriptPath = path.join(__dirname, "..", "scripts", "get-codex-window.ps1");
+  const scriptPath = app.isPackaged
+    ? path.join(process.resourcesPath, "scripts", "get-codex-window.ps1")
+    : path.join(__dirname, "..", "scripts", "get-codex-window.ps1");
   const check = () => {
     if (followBusy || !widgetWindow || widgetWindow.isDestroyed()) return;
     followBusy = true;
@@ -213,4 +216,28 @@ function saveWidgetSettings(settings) {
 function clamp(value, min, max) {
   if (!Number.isFinite(value)) return 1;
   return Math.min(max, Math.max(min, value));
+}
+
+function resolveCodexExecutable() {
+  if (process.env.CODEX_CLI_PATH && fs.existsSync(process.env.CODEX_CLI_PATH)) {
+    return process.env.CODEX_CLI_PATH;
+  }
+
+  const localAppData = process.env.LOCALAPPDATA;
+  if (localAppData) {
+    const binRoot = path.join(localAppData, "OpenAI", "Codex", "bin");
+    try {
+      const candidates = fs.readdirSync(binRoot, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => path.join(binRoot, entry.name, "codex.exe"))
+        .filter((candidate) => fs.existsSync(candidate))
+        .map((candidate) => ({ candidate, modified: fs.statSync(candidate).mtimeMs }))
+        .sort((a, b) => b.modified - a.modified);
+      if (candidates.length) return candidates[0].candidate;
+    } catch {
+      // Fall through to PATH for CLI-only installations.
+    }
+  }
+
+  return "codex";
 }

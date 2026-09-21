@@ -6,8 +6,9 @@ const POLL_INTERVAL_MS = 30_000;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 export class RateLimitClient extends EventEmitter {
-  constructor() {
+  constructor(options = {}) {
     super();
+    this.command = options.command ?? "codex";
     this.process = null;
     this.reader = null;
     this.nextId = 1;
@@ -64,7 +65,7 @@ export class RateLimitClient extends EventEmitter {
     clearTimeout(this.reconnectTimer);
     this.emit("status", { kind: "connecting", message: "正在连接 Codex" });
 
-    const proc = spawn("codex", ["app-server"], {
+    const proc = spawn(this.command, ["app-server"], {
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
     });
