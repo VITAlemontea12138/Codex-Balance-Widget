@@ -1,0 +1,17 @@
+node_modules/
+dist/
+release/
+out/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local or unused artwork sources
+/Codex 图像 2026年9月20日 22_35_07.png
+/assets/character-default.png
+/assets/character-main.png
+/assets/character-smile.png
+/assets/character-states-8.png
+/assets/character-states-16.png
+/assets/character-thinking.png
+

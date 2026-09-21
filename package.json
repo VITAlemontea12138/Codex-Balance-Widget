@@ -1,0 +1,27 @@
+{
+  "name": "codex-balance-widget",
+  "version": "0.1.0",
+  "description": "A live Codex usage widget with an interactive desktop character for Windows.",
+  "license": "MIT",
+  "author": "VITAlemontea12138",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VITAlemontea12138/Codex-Balance-Widget.git"
+  },
+  "homepage": "https://github.com/VITAlemontea12138/Codex-Balance-Widget#readme",
+  "bugs": {
+    "url": "https://github.com/VITAlemontea12138/Codex-Balance-Widget/issues"
+  },
+  "type": "module",
+  "main": "src/main.mjs",
+  "scripts": {
+    "check": "node scripts/check-limits.mjs",
+    "start": "electron ."
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "electron": "44.4.3"
+  }
+}

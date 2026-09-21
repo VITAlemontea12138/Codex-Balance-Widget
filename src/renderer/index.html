@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Codex 额度挂件</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="widget-shell">
+      <section class="quota-card" aria-label="Codex 剩余用量">
+        <div class="drag-strip" title="拖动挂件"></div>
+        <header class="card-header">
+          <div class="brand">
+            <span class="brand-mark">&lt;&gt;</span>
+            <div>
+              <strong>CODEX QUOTA</strong>
+              <span id="statusText">正在连接 Codex</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="settingsButton" type="button" title="调整大小" aria-label="调整大小">⚙</button>
+            <button id="refreshButton" type="button" title="立即刷新" aria-label="立即刷新">↻</button>
+            <button id="closeButton" type="button" title="退出挂件" aria-label="退出挂件">×</button>
+          </div>
+        </header>
+
+        <div id="meters" class="meters">
+          <div class="skeleton"></div>
+          <div class="skeleton short"></div>
+        </div>
+
+        <div id="settingsPanel" class="settings-panel" hidden>
+          <div class="setting-title">
+            <span>整体大小</span>
+            <strong id="scaleValue">100%</strong>
+          </div>
+          <input id="scaleSlider" type="range" min="70" max="140" step="5" value="100" aria-label="挂件整体大小" />
+          <p>人物、文本框和文字将保持等比例缩放</p>
+          <button id="resetScaleButton" class="reset-size" type="button">恢复默认大小</button>
+        </div>
+
+        <footer class="card-footer">
+          <span><i id="statusDot" class="status-dot connecting"></i><span id="updatedText">等待首次数据</span></span>
+          <span class="refresh-note">自动刷新 30 秒</span>
+        </footer>
+      </section>
+
+      <button id="characterButton" class="character-button" type="button" title="点击角色刷新额度" aria-label="点击角色刷新额度">
+        <span id="character" class="character state-default" role="img" aria-label="Codex 助手角色"></span>
+      </button>
+
+      <div id="toast" class="toast" aria-live="polite"></div>
+    </main>
+    <script type="module" src="./renderer.js"></script>
+  </body>
+</html>
