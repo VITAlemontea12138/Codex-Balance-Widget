@@ -19,6 +19,7 @@ let movingProgrammatically = false;
 let followBusy = false;
 let followTimer = null;
 let widgetScale = 1;
+let suppressMoveUpdatesUntil = 0;
 
 const rateClient = new RateLimitClient({ command: resolveCodexExecutable() });
 
@@ -98,10 +99,10 @@ function createWindow() {
   });
 
   widgetWindow.on("move", () => {
-    if (movingProgrammatically || !lastCodexBounds || !widgetWindow) return;
+    if (movingProgrammatically || Date.now() < suppressMoveUpdatesUntil || !lastCodexBounds || !widgetWindow) return;
     const bounds = widgetWindow.getBounds();
-    rightGap = lastCodexBounds.right - (bounds.x + bounds.width);
-    bottomGap = lastCodexBounds.bottom - (bounds.y + bounds.height);
+    rightGap = clamp(lastCodexBounds.right - (bounds.x + bounds.width), 0, 240);
+    bottomGap = clamp(lastCodexBounds.bottom - (bounds.y + bounds.height), 0, 240);
   });
 }
 
@@ -158,8 +159,9 @@ function startFollowingCodex() {
         const current = widgetWindow.getBounds();
         if (current.x !== x || current.y !== y) {
           movingProgrammatically = true;
+          suppressMoveUpdatesUntil = Date.now() + 600;
           widgetWindow.setPosition(x, y, false);
-          setTimeout(() => { movingProgrammatically = false; }, 50);
+          setTimeout(() => { movingProgrammatically = false; }, 650);
         }
         if (!widgetWindow.isVisible()) widgetWindow.showInactive();
       },
