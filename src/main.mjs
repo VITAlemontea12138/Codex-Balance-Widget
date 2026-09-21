@@ -18,10 +18,20 @@ let bottomGap = 26;
 let movingProgrammatically = false;
 let followBusy = false;
 let followTimer = null;
+let followEnabled = true;
 let widgetScale = 1;
-let suppressMoveUpdatesUntil = 0;
+let userMoveUntil = 0;
+let lastProgrammaticPosition = null;
 
 const rateClient = new RateLimitClient({ command: resolveCodexExecutable() });
+
+// 透明窗口不需要硬件加速；关闭 GPU 进程可以避免部分 Windows 环境
+// 因显卡驱动/运行库缺失导致程序双击后无窗口的问题。
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch("disable-gpu");
+app.commandLine.appendSwitch("disable-gpu-compositing");
+app.commandLine.appendSwitch("in-process-gpu");
+app.commandLine.appendSwitch("no-sandbox");
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 if (!hasSingleInstanceLock) {
@@ -99,10 +109,18 @@ function createWindow() {
   });
 
   widgetWindow.on("move", () => {
-    if (movingProgrammatically || Date.now() < suppressMoveUpdatesUntil || !lastCodexBounds || !widgetWindow) return;
+    if (!lastCodexBounds || !widgetWindow) return;
     const bounds = widgetWindow.getBounds();
-    rightGap = clamp(lastCodexBounds.right - (bounds.x + bounds.width), 0, 240);
-    bottomGap = clamp(lastCodexBounds.bottom - (bounds.y + bounds.height), 0, 240);
+    const sameAsProgrammatic = lastProgrammaticPosition &&
+      Date.now() - lastProgrammaticPosition.at < 2_000 &&
+      bounds.x === lastProgrammaticPosition.x &&
+      bounds.y === lastProgrammaticPosition.y;
+    if (movingProgrammatically || sameAsProgrammatic) return;
+    rightGap = clamp(lastCodexBounds.right - (bounds.x + bounds.width), -2_000, 2_000);
+    bottomGap = clamp(lastCodexBounds.bottom - (bounds.y + bounds.height), -2_000, 2_000);
+    userMoveUntil = Date.now() + 900;
+    // 用户主动拖动后，以用户位置为准，避免后台跟随检查把窗口吸回旧位置。
+    followEnabled = false;
   });
 }
 
@@ -118,8 +136,12 @@ function wireRateClient() {
 }
 
 function sendToRenderer(channel, value) {
-  if (!widgetWindow || widgetWindow.isDestroyed()) return;
-  widgetWindow.webContents.send(channel, value);
+  if (!widgetWindow || widgetWindow.isDestroyed() || widgetWindow.webContents.isDestroyed()) return;
+  try {
+    widgetWindow.webContents.send(channel, value);
+  } catch {
+    // Renderer may be recreating during startup; the next status update will retry.
+  }
 }
 
 function startFollowingCodex() {
@@ -127,7 +149,7 @@ function startFollowingCodex() {
     ? path.join(process.resourcesPath, "scripts", "get-codex-window.ps1")
     : path.join(__dirname, "..", "scripts", "get-codex-window.ps1");
   const check = () => {
-    if (followBusy || !widgetWindow || widgetWindow.isDestroyed()) return;
+    if (!followEnabled || followBusy || Date.now() < userMoveUntil || !widgetWindow || widgetWindow.isDestroyed()) return;
     followBusy = true;
     execFile(
       "powershell.exe",
@@ -136,7 +158,9 @@ function startFollowingCodex() {
       (error, stdout) => {
         followBusy = false;
         if (error || !stdout.trim()) {
-          widgetWindow?.hide();
+          // 新版 Codex 桌面端有时不暴露传统 Win32 主窗口句柄。
+          // 此时保留挂件当前位置，不应让用户误以为程序没有启动。
+          if (widgetWindow && !widgetWindow.isVisible()) widgetWindow.showInactive();
           return;
         }
 
@@ -159,9 +183,9 @@ function startFollowingCodex() {
         const current = widgetWindow.getBounds();
         if (current.x !== x || current.y !== y) {
           movingProgrammatically = true;
-          suppressMoveUpdatesUntil = Date.now() + 600;
+          lastProgrammaticPosition = { x, y, at: Date.now() };
           widgetWindow.setPosition(x, y, false);
-          setTimeout(() => { movingProgrammatically = false; }, 650);
+          setTimeout(() => { movingProgrammatically = false; }, 120);
         }
         if (!widgetWindow.isVisible()) widgetWindow.showInactive();
       },
@@ -183,14 +207,17 @@ function resizeWidget(scale) {
   if (!widgetWindow || widgetWindow.isDestroyed()) return;
   const current = widgetWindow.getBounds();
   const size = scaledWindowSize(scale);
+  const x = current.x + current.width - size.width;
+  const y = current.y + current.height - size.height;
   movingProgrammatically = true;
+  lastProgrammaticPosition = { x, y, at: Date.now() };
   widgetWindow.setBounds({
-    x: current.x + current.width - size.width,
-    y: current.y + current.height - size.height,
+    x,
+    y,
     width: size.width,
     height: size.height,
   }, false);
-  setTimeout(() => { movingProgrammatically = false; }, 80);
+  setTimeout(() => { movingProgrammatically = false; }, 120);
 }
 
 function settingsPath() {

@@ -44,7 +44,7 @@
 普通用户请打开仓库右侧的 **Releases**，下载：
 
 ```text
-Codex-Balance-Widget-1.0.1-win-x64.exe
+Codex-Balance-Widget-1.0.2-win-x64.exe
 ```
 
 无需安装 Node.js。确保 Codex 桌面版已经登录，双击 EXE 即可启动。可以把 EXE 放到桌面或任意文件夹。
