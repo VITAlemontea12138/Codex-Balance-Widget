@@ -176,16 +176,45 @@ button { font: inherit; }
 .settings-open .meters, .settings-open .card-footer { display: none; }
 .setting-title { display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
 .setting-title strong { color: var(--cyan); font-size: 12px; }
-.settings-panel input { width: 100%; accent-color: var(--cyan-strong); cursor: pointer; }
 .settings-panel p { margin: 0; color: #758ba5; font-size: 9px; }
+.size-stepper {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  gap: 8px;
+}
+.size-stepper span {
+  color: #9db0c8;
+  font-size: 10px;
+  text-align: center;
+}
+.size-stepper button,
 .reset-size {
-  justify-self: start;
   padding: 5px 9px;
   border: 1px solid rgba(101, 220, 255, .22);
   border-radius: 8px;
   color: #bed2e7;
   background: rgba(101, 220, 255, .07);
   cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+.size-stepper button { padding: 4px 0 6px; color: var(--cyan); font-size: 18px; line-height: 1; }
+.size-stepper button:hover, .reset-size:hover { background: rgba(101, 220, 255, .14); }
+.size-stepper button:disabled { cursor: default; opacity: .35; }
+.reset-size { justify-self: start; }
+
+.resize-corner {
+  position: absolute;
+  z-index: 20;
+  right: 1px;
+  bottom: 1px;
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+  opacity: .65;
+  background:
+    linear-gradient(135deg, transparent 58%, rgba(101, 220, 255, .75) 59%, rgba(101, 220, 255, .75) 66%, transparent 67%),
+    linear-gradient(135deg, transparent 76%, rgba(101, 220, 255, .5) 77%, rgba(101, 220, 255, .5) 84%, transparent 85%);
 }
 
 .character-button {

@@ -32,11 +32,15 @@
 
         <div id="settingsPanel" class="settings-panel" hidden>
           <div class="setting-title">
-            <span>整体大小</span>
+            <span>窗口缩放</span>
             <strong id="scaleValue">100%</strong>
           </div>
-          <input id="scaleSlider" type="range" min="70" max="140" step="5" value="100" aria-label="挂件整体大小" />
-          <p>人物、文本框和文字将保持等比例缩放</p>
+          <div class="size-stepper" aria-label="挂件整体大小微调">
+            <button id="sizeDownButton" type="button" aria-label="缩小挂件">−</button>
+            <span>拖动最外侧边缘或四角</span>
+            <button id="sizeUpButton" type="button" aria-label="放大挂件">＋</button>
+          </div>
+          <p>人物、文本框和文字始终等比例缩放，范围 70%–140%</p>
           <button id="resetScaleButton" class="reset-size" type="button">恢复默认大小</button>
         </div>
 
@@ -51,6 +55,7 @@
       </button>
 
       <div id="toast" class="toast" aria-live="polite"></div>
+      <div class="resize-corner" aria-hidden="true"></div>
     </main>
     <script type="module" src="./renderer.js"></script>
   </body>

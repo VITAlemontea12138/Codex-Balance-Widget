@@ -7,4 +7,5 @@ contextBridge.exposeInMainWorld("codexWidget", {
   close: () => ipcRenderer.send("window:close"),
   onData: (callback) => ipcRenderer.on("quota:data", (_event, value) => callback(value)),
   onStatus: (callback) => ipcRenderer.on("quota:status", (_event, value) => callback(value)),
+  onScaleChanged: (callback) => ipcRenderer.on("settings:scaleChanged", (_event, value) => callback(value)),
 });

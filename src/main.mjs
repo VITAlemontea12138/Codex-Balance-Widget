@@ -8,6 +8,8 @@ import { RateLimitClient } from "./rate-limit-client.mjs";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE_WIDTH = 340;
 const BASE_HEIGHT = 400;
+const MIN_SCALE = 0.7;
+const MAX_SCALE = 1.4;
 
 let widgetWindow = null;
 let latestData = null;
@@ -22,6 +24,7 @@ let followEnabled = true;
 let widgetScale = 1;
 let userMoveUntil = 0;
 let lastProgrammaticPosition = null;
+let saveScaleTimer = null;
 
 const rateClient = new RateLimitClient({ command: resolveCodexExecutable() });
 
@@ -67,7 +70,7 @@ ipcMain.handle("quota:refresh", async () => {
 
 ipcMain.handle("settings:get", () => ({ scale: widgetScale }));
 ipcMain.handle("settings:setScale", (_event, value) => {
-  const nextScale = clamp(Number(value), 0.7, 1.4);
+  const nextScale = clamp(Number(value), MIN_SCALE, MAX_SCALE);
   widgetScale = nextScale;
   resizeWidget(nextScale);
   saveWidgetSettings({ scale: nextScale });
@@ -85,7 +88,11 @@ function createWindow() {
     transparent: true,
     backgroundColor: "#00000000",
     alwaysOnTop: true,
-    resizable: false,
+    resizable: true,
+    minWidth: Math.round(BASE_WIDTH * MIN_SCALE),
+    minHeight: Math.round(BASE_HEIGHT * MIN_SCALE),
+    maxWidth: Math.round(BASE_WIDTH * MAX_SCALE),
+    maxHeight: Math.round(BASE_HEIGHT * MAX_SCALE),
     maximizable: false,
     minimizable: false,
     skipTaskbar: true,
@@ -100,6 +107,7 @@ function createWindow() {
   });
 
   widgetWindow.setAlwaysOnTop(true, "floating");
+  widgetWindow.setAspectRatio(BASE_WIDTH / BASE_HEIGHT);
   widgetWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
   widgetWindow.once("ready-to-show", () => widgetWindow?.showInactive());
 
@@ -121,6 +129,18 @@ function createWindow() {
     userMoveUntil = Date.now() + 900;
     // 用户主动拖动后，以用户位置为准，避免后台跟随检查把窗口吸回旧位置。
     followEnabled = false;
+  });
+
+  widgetWindow.on("resize", () => {
+    if (!widgetWindow || widgetWindow.isDestroyed()) return;
+    const bounds = widgetWindow.getBounds();
+    const nextScale = clamp(bounds.width / BASE_WIDTH, MIN_SCALE, MAX_SCALE);
+    widgetScale = nextScale;
+    followEnabled = false;
+    userMoveUntil = Date.now() + 900;
+    sendToRenderer("settings:scaleChanged", { scale: nextScale });
+    clearTimeout(saveScaleTimer);
+    saveScaleTimer = setTimeout(() => saveWidgetSettings({ scale: widgetScale }), 250);
   });
 }
 
@@ -207,8 +227,8 @@ function resizeWidget(scale) {
   if (!widgetWindow || widgetWindow.isDestroyed()) return;
   const current = widgetWindow.getBounds();
   const size = scaledWindowSize(scale);
-  const x = current.x + current.width - size.width;
-  const y = current.y + current.height - size.height;
+  const x = current.x;
+  const y = current.y;
   movingProgrammatically = true;
   lastProgrammaticPosition = { x, y, at: Date.now() };
   widgetWindow.setBounds({
@@ -227,7 +247,7 @@ function settingsPath() {
 function loadWidgetSettings() {
   try {
     const parsed = JSON.parse(fs.readFileSync(settingsPath(), "utf8"));
-    return { scale: clamp(Number(parsed.scale), 0.7, 1.4) };
+    return { scale: clamp(Number(parsed.scale), MIN_SCALE, MAX_SCALE) };
   } catch {
     return { scale: 1 };
   }

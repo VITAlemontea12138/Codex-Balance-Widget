@@ -10,14 +10,15 @@ const character = document.querySelector("#character");
 const toast = document.querySelector("#toast");
 const quotaCard = document.querySelector(".quota-card");
 const settingsPanel = document.querySelector("#settingsPanel");
-const scaleSlider = document.querySelector("#scaleSlider");
 const scaleValue = document.querySelector("#scaleValue");
+const sizeDownButton = document.querySelector("#sizeDownButton");
+const sizeUpButton = document.querySelector("#sizeUpButton");
 const resetScaleButton = document.querySelector("#resetScaleButton");
 
 let latestData = null;
 let currentStatus = { kind: "connecting", message: "正在连接 Codex" };
+let currentScale = 1;
 let toastTimer = null;
-let scaleTimer = null;
 let poseTimer = null;
 let idleTimer = null;
 
@@ -51,17 +52,13 @@ settingsButton.addEventListener("click", () => {
   settingsPanel.hidden = !opening;
   quotaCard.classList.toggle("settings-open", opening);
 });
-scaleSlider.addEventListener("input", () => {
-  const percent = Number(scaleSlider.value);
-  applyScale(percent / 100);
-  clearTimeout(scaleTimer);
-  scaleTimer = setTimeout(() => window.codexWidget.setScale(percent / 100), 80);
-});
+sizeDownButton.addEventListener("click", () => setScale(currentScale - 0.1));
+sizeUpButton.addEventListener("click", () => setScale(currentScale + 0.1));
 resetScaleButton.addEventListener("click", () => {
-  scaleSlider.value = "100";
-  applyScale(1);
-  window.codexWidget.setScale(1);
+  setScale(1);
 });
+
+window.codexWidget.onScaleChanged(({ scale }) => applyScale(scale));
 
 setInterval(() => {
   if (latestData) renderMeters();
@@ -200,10 +197,23 @@ function escapeHtml(value) {
 
 function applyScale(scale) {
   const safeScale = Math.min(1.4, Math.max(0.7, Number(scale) || 1));
+  currentScale = safeScale;
   document.documentElement.style.setProperty("--widget-scale", safeScale);
   const percent = Math.round(safeScale * 100);
-  scaleSlider.value = String(percent);
   scaleValue.textContent = `${percent}%`;
+  sizeDownButton.disabled = percent <= 70;
+  sizeUpButton.disabled = percent >= 140;
+}
+
+async function setScale(scale) {
+  const safeScale = Math.min(1.4, Math.max(0.7, Math.round(scale * 10) / 10));
+  applyScale(safeScale);
+  try {
+    const settings = await window.codexWidget.setScale(safeScale);
+    applyScale(settings.scale);
+  } catch {
+    showToast("调整大小失败");
+  }
 }
 
 window.codexWidget.getSettings()
